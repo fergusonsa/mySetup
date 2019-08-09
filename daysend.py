@@ -1,32 +1,38 @@
 #!/usr/bin/python
 import datetime
-# import email.MIMEMultipart
-# import email.MIMEText
 import fileinput
-import glob 
-# import httplib2
-# import lxml.objectify
+import glob
 import numbers
 import os
 import os.path
 import re
-# import refreshbooks.api
 import shutil
 import smtplib
-# import sqlite3
+import sqlite3
 import string
 import subprocess
 import sys
 import tempfile
 import traceback
 import webbrowser
-# import yaml
 import zipfile
+
+# import email.MIMEMultipart
+# import email.MIMEText
+# import httplib2
+# import lxml.objectify
+# import refreshbooks.api
+# import yaml
 
 # from apiclient import discovery
 # from oauth2client import client
 # from oauth2client import tools
 # from oauth2client.file import Storage
+
+'''
+from importlib import reload
+reload(daysend)
+'''
 
 DATE_TIME_FORMAT = '%Y-%m-%d %H:%M %p'
 OUTPUT_FORMAT = "{:19}  {:15}  {}"
@@ -175,43 +181,54 @@ def parse_isoformat_datetime(dt_str):
     # cfg_file_path = os.path.join( os.environ.get('HOME'), ".tracker", "config.cfg")
 
 
-# def get_chrome_history_copy_path():
-    # """ Creates a copy of the history file for the first profile of Google Chrome in a newly
-    # created temporary directory and returns the path. Note that it will not find any other
-    # profile.
-    # """
-    # file_path = os.path.join(os.environ.get('HOME'), 'Library', 'Application Support',
-                             # 'Google', 'Chrome', 'Profile 1', 'History')
-    # temp_dir = tempfile.mkdtemp()
-    # temp_path = os.path.join(temp_dir, 'temp_file_name')
-    # shutil.copy2(file_path, temp_path)
-    # return temp_path
+def get_chrome_history_copy_path():
+    """ Creates a copy of the history file for the first profile of Google Chrome in a newly
+    created temporary directory and returns the path. Note that it will not find any other
+    profile.
+    """
+    if sys.platform == 'cygwin':
+        file_path = os.path.join('/', 'cygdrive', 'c', 'Users', 'fergusos', 'AppData', 'Local',
+                                 'Google', 'Chrome', 'User Data', 'Default', 'History')
+    elif sys.platform == 'win32':
+        file_path = os.path.join(os.environ.get('HOME'), 'AppData', 'Local',
+                                 'Google', 'Chrome', 'User Data', 'Default', 'History')
+    elif sys.platform == 'darwin':
+        file_path = os.path.join(os.environ.get('HOME'), 'Library', 'Application Support',
+                                 'Google', 'Chrome', 'Profile 1', 'History')
+
+    if os.path.isfile(file_path):
+        temp_dir = tempfile.mkdtemp()
+        temp_path = os.path.join(temp_dir, 'temp_file_name')
+        shutil.copy2(file_path, temp_path)
+        return temp_path
+    else:
+        raise
 
 
-# def get_chrome_history_copy_paths(for_date=None):
-    # """ Creates a copy of the history file for the first profile of Google Chrome in a newly
-    # created temporary directory and returns the path. Note that it will not find any other
-    # profile.
-    # """
-    # if not for_date:
-        # for_date = datetime.date.today()
-    # paths = []
-    # user_path = os.path.join(os.environ.get('HOME'), 'Library', 'Application Support',
-                             # 'Google', 'Chrome')
-    # temp_dir = tempfile.mkdtemp()
-    # for_date_midnight_timestamp = datetime.datetime.combine(for_date, datetime.datetime.min.time())
-    # for file in glob.glob(user_path + '/*/History'):
-        # mod_file_timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(file))
-        # if mod_file_timestamp > for_date_midnight_timestamp:
-            # profile_name = os.path.basename(os.path.dirname(file))
-            # temp_path = os.path.join(temp_dir, profile_name + '_History')
-            # shutil.copy2(file, temp_path)
-            # paths.append(temp_path)
-    # return paths
+def get_chrome_history_copy_paths(for_date=None):
+    """ Creates a copy of the history file for the first profile of Google Chrome in a newly
+    created temporary directory and returns the path. Note that it will not find any other
+    profile.
+    """
+    if not for_date:
+        for_date = datetime.date.today()
+    paths = []
+    user_path = os.path.join(os.environ.get('HOME'), 'Library', 'Application Support',
+                             'Google', 'Chrome')
+    temp_dir = tempfile.mkdtemp()
+    for_date_midnight_timestamp = datetime.datetime.combine(for_date, datetime.datetime.min.time())
+    for file in glob.glob(user_path + '/*/History'):
+        mod_file_timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(file))
+        if mod_file_timestamp > for_date_midnight_timestamp:
+            profile_name = os.path.basename(os.path.dirname(file))
+            temp_path = os.path.join(temp_dir, profile_name + '_History')
+            shutil.copy2(file, temp_path)
+            paths.append(temp_path)
+    return paths
 
 
 def cleanup(dir_path):
-    if os.path.isfile(dir_path):    
+    if os.path.isfile(dir_path):
         dir_path = os.path.dirname(dir_path)
 #     if os.path.exists(dir_path) and dir_path != os.path.expanduser('~') and dir_path != '/':
     if os.path.exists(dir_path) and dir_path.startswith(tempfile.gettempdir()):
@@ -241,40 +258,80 @@ def get_utils_actions(for_date=None):
     return res_lines
 
 
-# def get_chrome_history(for_date=None):
-    # if for_date is None:
-        # for_date=datetime.date.today()
+def get_chrome_history(for_date=None):
+    if for_date is None:
+        for_date=datetime.date.today()
 
     # history_file_paths = get_chrome_history_copy_paths(for_date)
-    # print(history_file_paths)
-    # allrows = []
-    # res_lines = []
-    # date_str = for_date.isoformat()
-    # next_date_str = (for_date + datetime.timedelta(days=1)).isoformat()
-    # print('date_str: {}   next_date_str: {}'.format(date_str, next_date_str))
-    # for history_file_path in history_file_paths:
-        # try:
-            # con = sqlite3.connect(history_file_path) #Connect to the database
-            # con.text_factory = str
-            # c = con.cursor()
-            # rows = c.execute("""select datetime(last_visit_time/1000000-11644473600,
-                                # "unixepoch", "localtime"),title, url 
-                                # from urls 
-                                # where datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") >= datetime("{}T00:00")
-                                # and datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") < datetime("{}T00:00")
-                                # order by last_visit_time desc""".format(date_str, next_date_str))
-            # allrows = rows.fetchall()
-            # print(len(allrows))
-            # con.close()
-            # for line in allrows:
-                # res_lines.append(OUTPUT_FORMAT.format(line[0], 'Chrome', line[1] + ' ' + line[2]))
-        # except:
-            # e = sys.exc_info()
-            # print('\nEXCEPTION trying to get google history from {}! {} \n{} \n{}'.format(history_file_path, e[0], e[1], e[2]))
+    history_file_paths = [get_chrome_history_copy_path()]
+    print(history_file_paths)
+    allrows = []
+    res_lines = []
+    date_str = for_date.isoformat()
+    next_date_str = (for_date + datetime.timedelta(days=1)).isoformat()
+    print('date_str: {}   next_date_str: {}'.format(date_str, next_date_str))
+    for history_file_path in history_file_paths:
+        try:
+            con = sqlite3.connect(history_file_path) #Connect to the database
+            con.text_factory = str
+            c = con.cursor()
+            rows = c.execute("""select datetime(last_visit_time/1000000-11644473600,
+                                "unixepoch", "localtime"),title, url
+                                from urls
+                                where datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") >= datetime("{}T00:00")
+                                and datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") < datetime("{}T00:00")
+                                order by last_visit_time desc""".format(date_str, next_date_str))
+            allrows = rows.fetchall()
+            print(len(allrows))
+            con.close()
+            for line in allrows:
+                res_lines.append(OUTPUT_FORMAT.format(line[0], 'Chrome', line[1] + ' ' + line[2]))
+        except:
+            e = sys.exc_info()
+            print('\nEXCEPTION trying to get google history from {}! {} \n{} \n{}'.format(history_file_path, e[0], e[1], e[2]))
 
-    # if len(history_file_paths) > 0:
-        # cleanup(history_file_paths[0])
-    # return res_lines
+    if len(history_file_paths) > 0:
+        cleanup(history_file_paths[0])
+    return res_lines
+
+
+def get_chrome_history_list(for_date=None):
+    if for_date is None:
+        for_date=datetime.date.today()
+
+    # history_file_paths = get_chrome_history_copy_paths(for_date)
+    history_file_paths = [get_chrome_history_copy_path()]
+    print(history_file_paths)
+    allrows = []
+    history = []
+    date_str = for_date.isoformat()
+    next_date_str = (for_date + datetime.timedelta(days=1)).isoformat()
+    print('date_str: {}   next_date_str: {}'.format(date_str, next_date_str))
+    for history_file_path in history_file_paths:
+        try:
+            con = sqlite3.connect(history_file_path) #Connect to the database
+            con.text_factory = str
+            c = con.cursor()
+            rows = c.execute("""select datetime(last_visit_time/1000000-11644473600,
+                                "unixepoch", "localtime"),title, url
+                                from urls
+                                where datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") >= datetime("{}T00:00")
+                                and datetime(last_visit_time/1000000-11644473600,"unixepoch", "localtime") < datetime("{}T00:00")
+                                order by last_visit_time desc""".format(date_str, next_date_str))
+            allrows = rows.fetchall()
+            print(len(allrows))
+            con.close()
+            for line in allrows:
+                history.append({'datetiem': line[0],
+                                'source': 'Chrome',
+                                'comment': line[1] + ' ' + line[2]})
+        except:
+            e = sys.exc_info()
+            print('\nEXCEPTION trying to get google history from {}! {} \n{} \n{}'.format(history_file_path, e[0], e[1], e[2]))
+
+    if len(history_file_paths) > 0:
+        cleanup(history_file_paths[0])
+    return history
 
 
 def get_bash_history2(for_date=None):
@@ -282,22 +339,43 @@ def get_bash_history2(for_date=None):
         for_date=datetime.date.today()
     res_lines = []
     date_str = for_date.strftime('%Y-%m-%d')
-    path = os.path.join(os.environ.get('HOME'), 
-                        "reports", 
-                        "bash_history", 
+    path = os.path.join(os.environ.get('HOME'),
+                        "reports",
+                        "bash_history",
                         "bash_history-{}.txt".format(date_str))
     if os.path.isfile(path):
         file = open(path, 'r')
         for line in file.readlines():
             matches = BASH_HISTORY_INPUT_PATTERN.match(line)
             if matches:
-                res_lines.append(OUTPUT_FORMAT.format(matches.group(4), 
-                                                      'bash', 
+                res_lines.append(OUTPUT_FORMAT.format(matches.group(4),
+                                                      'bash',
                                                       matches.group(1) + ' ' + matches.group(2) + ' ' + matches.group(5)))
     return list(set(res_lines))
 
 
-def get_todays_file_path(todays_date_str=None):
+def get_bash_history_list(for_date=None):
+    if for_date is None:
+        for_date=datetime.date.today()
+    date_str = for_date.strftime('%Y-%m-%d')
+    path = os.path.join(os.environ.get('HOME'),
+                        "reports",
+                        "bash_history",
+                        "bash_history-{}.txt".format(date_str))
+    history = []
+    if os.path.isfile(path):
+        file = open(path, 'r')
+        for line in file.readlines():
+            matches = BASH_HISTORY_INPUT_PATTERN.match(line)
+            if matches:
+
+                history.append({'datetime': matches.group(4),
+                                'source': 'bash',
+                                'comment': matches.group(1) + ' ' + matches.group(2) + ' ' + matches.group(5)})
+    return list(set(history))
+
+
+def get_notes_file_path(todays_date_str=None):
     if todays_date_str is None:
         todays_date_str=datetime.date.today().isoformat()
     return os.path.abspath(os.path.join('/', 'cygdrive', 'p',
@@ -306,15 +384,15 @@ def get_todays_file_path(todays_date_str=None):
 
 
 def skip_existing_contents(todays_date_str=None, previous_date=None, expected_filename=None, input_src=None):
-    """ 
+    """
     Arguments:
-        todays_date_str - Optional - 
-        previous_date - Optional - 
-        expected_filename - Optional - 
+        todays_date_str - Optional -
+        previous_date - Optional -
+        expected_filename - Optional -
     """
     if input_src is None:
         input_src = fileinput.input()
-        
+
     update_input = not expected_filename and not os.path.exists(expected_filename)
 
     last_line = ''
@@ -333,6 +411,12 @@ def skip_existing_contents(todays_date_str=None, previous_date=None, expected_fi
 
         print(line, end='')
     return update_input, is_yesterdays_file, last_line, start_timestamp
+
+
+def get_end_of_this_week_date():
+    todays_date=datetime.date.today()
+    current_dayofweek = todays_date.weekday() # Today
+    return todays_date - datetime.timedelta(days=(current_dayofweek - END_OF_WEEK_DAY))
 
 
 def get_end_of_week_date(todays_date=None):
@@ -364,6 +448,7 @@ NOTE_FILE_LINE_PATTERN = re.compile("^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\
 NOTE_FILE_LINE_PATTERN_2 = re.compile("^(?P<hours>\d{1,2}):(?P<minutes>\d{2})(:(?P<seconds>\d{2}))?( (?P<ampm>[AP]M))? (?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\s*(?P<rest>.*)$")
 '''3:59 PM 2018-12-19  working on eclipse config....'''
 
+
 def parse_line(line):
     parts = NOTE_FILE_LINE_PATTERN.match(line)
     if not parts:
@@ -378,17 +463,19 @@ def parse_line(line):
         else:
             seconds = 0
         timestamp = datetime.datetime(int(parts.groupdict()['year']), int(parts.groupdict()['month']), int(parts.groupdict()['day']),
-                                      hours, int(parts.groupdict()['minutes']), seconds)    
+                                      hours, int(parts.groupdict()['minutes']), seconds)
         rest = parts.groupdict()['rest']
     else:
         timestamp = None
         rest = line
     return timestamp, rest
 
-    
+
 def get_file_history(file_path):
     file_date = datetime.datetime.strptime(os.path.splitext(os.path.basename(file_path))[0], '%Y-%m-%d')
-    first_timestamp = last_timestamp = timestamp = None
+    first_timestamp = last_timestamp = timestamp = leave_office_timestamp = None
+    out_of_office_time = datetime.timedelta()
+    
     with open(file_path, 'r') as flh:
         # Get the first and last times for entries in the file.
         for line in flh.readlines():
@@ -398,15 +485,19 @@ def get_file_history(file_path):
                     first_timestamp = timestamp
                 elif (not last_timestamp or timestamp > last_timestamp) and timestamp > file_date:
                     last_timestamp = timestamp
-
+                if leave_office_timestamp:
+                    out_of_office_time += timestamp - leave_office_timestamp 
+                    leave_office_timestamp = None
+                elif rest_of_line and rest_of_line.lower().startswith('out of office'):
+                    leave_office_timestamp = timestamp
     if file_date.date() == datetime.date.today() and (last_timestamp is None or datetime.datetime.now() > last_timestamp):
         last_timestamp = datetime.datetime.now()
 
-    return {"date": file_date.date(),
-            "filepath": file_path,
-            "start": first_timestamp,
-            "end": last_timestamp,
-            "period": last_timestamp - first_timestamp if last_timestamp and first_timestamp else None}
+    return {'date': file_date.date(),
+            'filepath': file_path,
+            'start': first_timestamp,
+            'end': last_timestamp,
+            'period': last_timestamp - first_timestamp - out_of_office_time if last_timestamp and first_timestamp else None}
 
 
 def get_notes_history(end_date=None, start_date=None):
@@ -424,8 +515,10 @@ def get_notes_history(end_date=None, start_date=None):
 
 
 def print_notes_times(end_of_week_date=None, hours_data=None):
-    if end_of_week_date is None:
-        end_of_week_date=get_end_of_week_date()
+    # if end_of_week_date is None:
+        # end_of_week_date=get_end_of_week_date()
+    end_of_week_date=get_end_of_week_date(end_of_week_date)
+
     if hours_data is None:
         hours_data = get_notes_history(end_of_week_date)
     print('{:<24} End of the week\n\n======= Weeks End Times ========\n'.format(datetime.datetime.now().strftime(DATE_TIME_FORMAT)))
@@ -434,11 +527,22 @@ def print_notes_times(end_of_week_date=None, hours_data=None):
         val = hours_data[key]
         total_hours += val["period"]
         end_str = "{end:%H:%M}".format(**val) if val["end"] else "     "
-        print('{:%Y-%m-%d}   {:%H:%M}   {}   {}'.format(val["date"], val["start"], end_str, 
+        print('{:%Y-%m-%d}   {:%H:%M}   {}   {}'.format(val["date"], val["start"], end_str,
                                                         timedelta_format(val["period"], '%H hours %M minutes')))
-    print("Total Hours: {}".format(timedelta_format(total_hours, '%H hours %M minutes')))
+    print("Total Hours: {}   Expected hours: {}".format(timedelta_format(total_hours, '%H hours %M minutes'), timedelta_format(len(hours_data) * datetime.timedelta(hours=7, minutes=30), '%H hours %M minutes')))
 
 
+def display_this_weeks_times():
+    print_notes_times(get_end_of_this_week_date())
+
+
+def display_months_times(month_date):
+    start_date = datetime.date(month_date.year, month_date.month, 1)
+    end_date = datetime.date(month_date.year, month_date.month + 1, 1) - datetime.timedelta(days=1)
+    hours_data = get_notes_history(end_date, start_date)
+    print_notes_times(end_date, hours_data)
+
+    
 # def get_timesheet_config():
     # """
     # """
@@ -539,12 +643,12 @@ def prep_timesheets(hours, end_of_week_date=None, config=None):
 
 
 # def email_archived_notes(start_date, end_date=None):
-    # """Email archived notes files from the start date to the end date, inclusive, 
+    # """Email archived notes files from the start date to the end date, inclusive,
     # to the configured email account."""
-    
+
     # if end_date is None:
         # end_date=datetime.date.today()
-        
+
     # # get the files from between the start and end dates
     # dir_path = os.path.abspath(os.path.join(os.path.expanduser('~'), 'notes'))
     # files_list = [os.path.join(dir_path, fl) for fl in os.listdir(dir_path) if is_filename_between_dates(fl, start_date, end_date)]
@@ -557,29 +661,29 @@ def prep_timesheets(hours, end_of_week_date=None, config=None):
             # archive_file.write(file, compress_type=zipfile.ZIP_DEFLATED)
 
     # shutil.move(archive_file_path, dir_path)
-                
+
 #     send_from = 'fergusonsa@yahoo.com'
 #     msg = email.MIMEMultipart.MIMEMultipart()
 #     msg['From'] = send_from
 #     msg['To'] = email.utils.COMMASPACE.join(send_from)
 #     msg['Date'] = email.utils.formatdate(localtime=True)
 #     msg['Subject'] = 'Archive of notes files from {} to {}'.format(start_date, end_date)
-# 
+#
 #     msg.attach(email.MIMEText.MIMEText(msg['Subject']))
-# 
-# 
+#
+#
 #     attachment = email.mime.base.MIMEBase('application', 'zip')
 #     with open(archive_file_path, "rb" ) as archive_file:
 #         attachment.set_payload(archive_file.read())
 #     email.encoders.encode_base64(attachment)
 #     attachment.add_header('Content-Disposition', 'attachment', filename=file_name)
 #     msg.attach(attachment)
-# 
+#
 #     mailer = smtplib.SMTP()
 #     mailer.connect()
 #     mailer.sendmail(from_, to, msg.as_string())
 #     mailer.close()
-# 
+#
 #     username = 'fergusonsa'
 #     password = 'sackville'
 #     try :
@@ -589,12 +693,13 @@ def prep_timesheets(hours, end_of_week_date=None, config=None):
 #         server.ehlo()
 #         server.login(username,password)
 #         server.sendmail(send_from, send_from, msg)
-#         server.quit()    
+#         server.quit()
 #         print('ok the email has sent ')
 #     except :
-#         print('can\'t send the Email')  
+#         print('can\'t send the Email')
 #         e = sys.exc_info()
 #         print('\nEXCEPTION trying to get google calendar events! {} \n{} \n{}\n'.format(e[0], e[1], e[2]))
+
 
 def get_month_first_date(dtDateTime):
     """From http://code.activestate.com/recipes/476197-first-last-day-of-the-month/ """
@@ -688,10 +793,10 @@ def get_month_last_date(dtDateTime):
     # if end_date is None:
         # end_date = datetime.date.today()
     # if config is None:
-        # config = get_timesheet_config()   
+        # config = get_timesheet_config()
     # if c is None:
         # c = create_freshbooks_client(config)
-                
+
     # project_name = config['current-project']
     # project_id = config[project_name]['freshbooks']['project-id']
 
@@ -713,10 +818,10 @@ def get_month_last_date(dtDateTime):
     # if end_date is None:
         # end_date = datetime.date.today()
     # if config is None:
-        # config = get_timesheet_config()   
+        # config = get_timesheet_config()
     # if c is None:
         # c = create_freshbooks_client(config)
-    
+
     # unbilled_entries = get_unbilled_time_entries(start_date, end_date, config, c)
     # if unbilled_entries:
         # for te in unbilled_entries:
@@ -734,11 +839,21 @@ def get_month_last_date(dtDateTime):
         # e = sys.exc_info()
         # print('\nEXCEPTION trying to get google calendar events! {} \n{} \n{}\n'.format(e[0], e[1], e[2]))
 
-    
+
+def get_days_action_history(desired_date=None):
+    if not desired_date:
+        desired_date = datetime.date.today()
+
+    actions = get_chrome_history_list(desired_date)
+    actions.extend(get_bash_history2_list(desired_date))
+
+    return actions
+
+
 def timestamp_main():
     todays_date_str = datetime.date.today().isoformat()
     update_input = True
-    expected_filename = get_todays_file_path()
+    expected_filename = get_notes_file_path()
 
     if not os.path.exists(expected_filename):
         with open(expected_filename, mode='w') as newfile:
@@ -766,7 +881,31 @@ def timestamp_main():
         print('{:<24}'.format(datetime.datetime.now().strftime(DATE_TIME_FORMAT)), end='')
 
 
-def weeks_end_main(end_of_week_date=None, start_date=None):
+def prep_weekly_status(end_of_week_date):
+    new_filename = os.path.abspath(os.path.join('/', 'cygdrive', 'p',
+                                        'notes',
+                                        'Flex Contractor - Weekly Project Tracking Sheet {} Scott Ferguson.docx'.format(
+                                                    end_of_week_date.isoformat())))
+    previous_filename = os.path.abspath(os.path.join(os.environ.get('HOME'),
+                                                     'notes',
+                                                     'Flex Contractor - Weekly Project Tracking Sheet {} Scott Ferguson.docx'.format(
+                                                         (end_of_week_date - datetime.timedelta(weeks=1)).isoformat())))
+    if not os.path.exists(previous_filename):
+        print('The file "{}" does not exist as expected!'.format(previous_filename, new_filename))
+    else:
+        if not os.path.exists(new_filename):
+            print('Copying "{}" to "{}"'.format(previous_filename, new_filename))
+            shutil.copy2(previous_filename, new_filename)
+        else:
+            print('The new file "{}" already exists!'.format(new_filename))
+        os.system('open "{}"'.format(new_filename))
+    
+    
+def open_timesheets():
+    webbrowser.open('http://icweb.ic.gc.ca/cio/ciotracking.nsf')        
+
+
+def weeks_end(end_of_week_date=None, start_date=None):
     """ IN PROGRESS"""
     if end_of_week_date is None:
         end_of_week_date = get_end_of_week_date()
@@ -776,18 +915,23 @@ def weeks_end_main(end_of_week_date=None, start_date=None):
     config = get_timesheet_config()
 
     print_notes_times(end_of_week_date, hours)
+    
+    # prep_weekly_status(end_of_week_date)
 #    update_freshbooks_timesheet(end_of_week_date, start_date, hours)
 #    create_invoice(end_of_week_date, start_date, config)
 #    prep_timesheets(hours, end_of_week_date)
+    open_timesheets()
 
 
-def days_end_main():
-    todays_date_str = datetime.date.today().isoformat()
-    yesterdays_date = (datetime.date.today() - datetime.timedelta(1))
+def days_end_main(days_date=None):
+    if days_date is None:
+        days_date = datetime.date.today()
+    todays_date_str = days_date.isoformat()
+    yesterdays_date = (days_date - datetime.timedelta(1))
 
     update_input = True
     is_yesterdays_file = False
-    expected_filename = get_todays_file_path()
+    expected_filename = get_notes_file_path(todays_date_str)
 
     (update_input, is_yesterdays_file, last_line, start_timestamp) = skip_existing_contents(
                                                                            todays_date_str,
@@ -817,9 +961,27 @@ def days_end_main():
         print('\n==============================')
 
 
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + datetime.timedelta(n)
+
+
+def loop_days_end_main(start_date, end_date):
+    for single_date in daterange(start_date, end_date):
+        print('Performing days_end_main("{}")'.format(single_date.isoformat()))
+        days_end_main(single_date)
+
+
+def start_day():            
+    todays_file_path = get_notes_file_path()
+    if not os.path.exists(todays_file_path):
+        with open(todays_file_path, 'w' ) as flh:
+            flh.write(OUTPUT_FORMAT.format(datetime.datetime.now().strftime(DATE_TIME_FORMAT), "Arrived and logged in.\n", ""))
+    os.system("start {0}".format(todays_file_path))
+
+
 if __name__ == "__main__":
 #     for line in sorted( get_bash_history2(datetime.datetime.now())):
 #         print(line)
 #     print_notes_times()
     days_end_main()
-
