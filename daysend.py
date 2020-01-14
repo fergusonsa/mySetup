@@ -535,7 +535,26 @@ def print_notes_times(end_of_week_date=None, hours_data=None):
 def display_this_weeks_times():
     print_notes_times(get_end_of_this_week_date())
 
+def display_last_weeks_times():
+    todays_date=datetime.date.today()
+    current_dayofweek = todays_date.weekday() # Today
+    last_week_date = todays_date - datetime.timedelta(days=(current_dayofweek - END_OF_WEEK_DAY + 7))
 
+    print_notes_times(last_week_date)
+
+def display_previous_weeks_times(numWeeks=None):
+    if numWeeks is None:
+        numWeeks = 1
+    todays_date=datetime.date.today()
+    current_dayofweek = todays_date.weekday() # Today
+    last_week_date = todays_date - datetime.timedelta(days=(current_dayofweek - END_OF_WEEK_DAY + (7* numWeeks)))
+
+    print_notes_times(last_week_date)
+
+def display_last_months_times():
+    month_date = datetime.date.today() - datetime.timedelta(days=datetime.date.today().day + 1)
+    display_months_times(month_date)
+    
 def display_months_times(month_date):
     start_date = datetime.date(month_date.year, month_date.month, 1)
     end_date = datetime.date(month_date.year, month_date.month + 1, 1) - datetime.timedelta(days=1)
@@ -574,7 +593,7 @@ create_invoice(end_of_week_date, config)
 prep_timesheets(hours, end_of_week_date)
 
 """
-# def update_freshbooks_timesheet(end_of_week_date=None, start_date=None, hours_data=None, config=None):
+def update_freshbooks_timesheet(end_of_week_date=None, start_date=None, hours_data=None, config=None):
     # if end_of_week_date is None:
         # end_of_week_date = get_end_of_week_date()
     # if start_date is None:
@@ -611,7 +630,7 @@ prep_timesheets(hours, end_of_week_date)
             # else:
                 # print('Already a time entry of {} hours for {}'.format(tentry[0].hours, tentry[0].date))
     # else:
-        # print('Cannot handle non-numeric project daily-hours config setting yet!')
+        print('Cannot handle non-numeric project daily-hours config setting yet!')
 
 
 def prep_timesheets(hours, end_of_week_date=None, config=None):
@@ -642,7 +661,7 @@ def prep_timesheets(hours, end_of_week_date=None, config=None):
         os.system('open "{}"'.format(new_filename))
 
 
-# def email_archived_notes(start_date, end_date=None):
+def email_archived_notes(start_date, end_date=None):
     # """Email archived notes files from the start date to the end date, inclusive,
     # to the configured email account."""
 
@@ -698,7 +717,7 @@ def prep_timesheets(hours, end_of_week_date=None, config=None):
 #     except :
 #         print('can\'t send the Email')
 #         e = sys.exc_info()
-#         print('\nEXCEPTION trying to get google calendar events! {} \n{} \n{}\n'.format(e[0], e[1], e[2]))
+        print('\nEXCEPTION trying to get google calendar events! {} \n{} \n{}\n'.format(e[0], e[1], e[2]))
 
 
 def get_month_first_date(dtDateTime):
@@ -719,7 +738,7 @@ def get_month_last_date(dtDateTime):
     return nextMonth - delta                 #subtract from nextMonth and return
 
 
-# def create_invoice(end_date=None, start_date=None, config=None):
+def create_invoice(end_date=None, start_date=None, config=None):
     # if config is None:
         # config = get_timesheet_config()
 
@@ -774,7 +793,7 @@ def get_month_last_date(dtDateTime):
                 # print(te.date, te.hours, te.billed, float(te.hours.text))
 
     # else:
-        # print('No time entries to add to an invoice between the dates {} and {}'.format(start_date.isoformat(), end_date.isoformat()))
+        print('No time entries to add to an invoice between the dates {} and {}'.format(start_date.isoformat(), end_date.isoformat()))
 
 """
           <amount>40</amount>
@@ -972,7 +991,7 @@ def loop_days_end_main(start_date, end_date):
         days_end_main(single_date)
 
 
-def start_day():            
+def start_day():
     todays_file_path = get_notes_file_path()
     if not os.path.exists(todays_file_path):
         with open(todays_file_path, 'w' ) as flh:
@@ -984,4 +1003,8 @@ if __name__ == "__main__":
 #     for line in sorted( get_bash_history2(datetime.datetime.now())):
 #         print(line)
 #     print_notes_times()
-    days_end_main()
+    display_this_weeks_times()
+    # display_last_weeks_times()
+    # display_last_months_times()
+    # display_previous_weeks_times(2)
+    # days_end_main()
