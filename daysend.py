@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import argparse
 import datetime
 import fileinput
 import glob
@@ -1000,11 +1001,19 @@ def start_day():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", dest="verbose", action="store_true")
+    parser.add_argument("-l", dest="last_week", action="store_true")
+    parser.add_argument("-m", dest="last_month", action="store_true")
+    
+    args = parser.parse_args()
+    if args.last_week:
+        display_last_weeks_times()
+    elif args.last_month:
+        display_last_months_times()
 #     for line in sorted( get_bash_history2(datetime.datetime.now())):
 #         print(line)
 #     print_notes_times()
-    display_this_weeks_times()
-    # display_last_weeks_times()
-    # display_last_months_times()
+    else:
+        display_this_weeks_times()
     # display_previous_weeks_times(2)
-    # days_end_main()
